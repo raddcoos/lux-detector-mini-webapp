@@ -65,8 +65,8 @@
 
             <div class="relative flex items-center justify-center w-full aspect-square">
                 <svg class="absolute inset-0 w-full h-full" viewbox="0 0 100 100">
-                    <circle class="opacity-10" cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-width="4"></circle>
-                    <circle cx="50" cy="50" fill="none" id="progress-circle" r="40" stroke="currentColor" stroke-dasharray="282.7" stroke-dashoffset="282.7" stroke-linecap="square" stroke-width="6"></circle>
+                    <circle class="opacity-10" cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-width="4"></circle>
+                    <circle cx="50" cy="50" fill="none" id="progress-circle" r="45" stroke="currentColor" stroke-dasharray="282.7" stroke-dashoffset="282.7" stroke-linecap="square" stroke-width="6"></circle>
                 </svg>
                 <div class="text-center z-10">
                     <span class="font-bold tracking-tight text-[72px] md:text-[80px] block transition-colors duration-500" id="lux-value">0%</span>
@@ -88,10 +88,9 @@
     </main>
 
     <script>
-        // Inform Telegram engine that the app container is ready for processing parameters
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand(); // Opens the mini app to full viewport size immediately
+            window.Telegram.WebApp.expand();
         }
 
         const appBody = document.getElementById('app-body');
@@ -110,6 +109,10 @@
         let streamRef = null;
         let intervalId = null;
 
+        let smoothedPercentage = 0; 
+        
+        const DAMPING_FACTOR = 0.12; 
+
         function updateUI(percentage) {
             percentage = Math.min(Math.max(Math.round(percentage), 0), 100);
             
@@ -117,7 +120,7 @@
             progressCircle.style.strokeDashoffset = offset;
             luxDisplay.textContent = `${percentage}%`;
             
-            const estimatedLux = (percentage / 100) * 1000;
+            const estimatedLux = (percentage / 100) * 3000;
             rawLuxDisplay.textContent = `${estimatedLux.toFixed(0)} EST. LUX`;
 
             let status = 'DARK';
@@ -157,15 +160,20 @@
             }
 
             const averageLuminance = totalRgbaLuminance / (data.length / 4);
-            const finalPercentage = (averageLuminance / 255) * 100;
-            updateUI(finalPercentage);
+            const normalizedLuminance = averageLuminance / 255;
+            
+            // Calibration mathematical exponent curves midtones down to neutralize automatic gain boosts
+            const calibratedValue = Math.pow(normalizedLuminance, 1.8);
+            const rawTargetPercentage = calibratedValue * 100;
+
+            smoothedPercentage = (rawTargetPercentage * DAMPING_FACTOR) + (smoothedPercentage * (1 - DAMPING_FACTOR));
+
+            updateUI(smoothedPercentage);
         }
 
-        // Single Intentional Event Trigger Block
         cameraBtn.addEventListener('click', async () => {
             rawLuxDisplay.textContent = "REQUESTING ACCESS...";
             
-            // Build elements explicitly upon verified touch engagement
             videoElement = document.createElement('video');
             videoElement.setAttribute('autoplay', '');
             videoElement.setAttribute('playsinline', '');
@@ -189,7 +197,7 @@
                 
                 videoElement.srcObject = streamRef;
                 videoElement.onloadedmetadata = () => {
-                    intervalId = setInterval(analyzeFrame, 200);
+                    intervalId = setInterval(analyzeFrame, 50); 
                 };
                 
                 permissionContainer.style.display = 'none';
@@ -207,7 +215,6 @@
             }
         }
 
-        // Setup base state cleanly without invoking background media sensor hooks automatically
         window.addEventListener('DOMContentLoaded', () => {
             updateUI(0);
         });
