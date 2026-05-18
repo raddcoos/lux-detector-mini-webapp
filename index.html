@@ -85,11 +85,6 @@
             </div>
             
         </div>
-
-        <div class="absolute bottom-6 w-full max-w-xs px-6 opacity-40 hover:opacity-100 transition-opacity" id="fallback-control">
-            <label class="font-label-mono text-[11px] block mb-1 text-center uppercase tracking-wider" for="lux-slider">Manual Override</label>
-            <input class="w-full h-px bg-current appearance-none cursor-pointer accent-current" id="lux-slider" max="100" min="0" type="range" value="0"/>
-        </div>
     </main>
 
     <script>
@@ -104,7 +99,6 @@
         const luxDisplay = document.getElementById('lux-value');
         const luxStatus = document.getElementById('lux-status');
         const rawLuxDisplay = document.getElementById('raw-lux');
-        const luxSlider = document.getElementById('lux-slider');
         const cameraBtn = document.getElementById('start-camera-btn');
         const permissionContainer = document.getElementById('permission-container');
 
@@ -123,7 +117,7 @@
             progressCircle.style.strokeDashoffset = offset;
             luxDisplay.textContent = `${percentage}%`;
             
-            const estimatedLux = (percentage / 100) * 10000;
+            const estimatedLux = (percentage / 100) * 1000;
             rawLuxDisplay.textContent = `${estimatedLux.toFixed(0)} EST. LUX`;
 
             let status = 'DARK';
@@ -212,14 +206,6 @@
                 alert("Please enable camera permissions specifically for Telegram within your phone system settings layout.");
             }
         }
-
-        luxSlider.addEventListener('input', (e) => {
-            if (streamRef) {
-                if (intervalId) clearInterval(intervalId);
-                streamRef.getTracks().forEach(track => track.stop());
-            }
-            updateUI(parseFloat(e.target.value));
-        });
 
         // Setup base state cleanly without invoking background media sensor hooks automatically
         window.addEventListener('DOMContentLoaded', () => {
