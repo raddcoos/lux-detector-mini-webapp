@@ -3,9 +3,12 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&family=Geist:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&amp;family=Geist:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -39,130 +42,189 @@
           },
         }
     </script>
-    <style>
-        body { min-height: max(884px, 100dvh); }
-    </style>
 </head>
 <body class="bg-background text-[#e2e2e2] font-body-md overflow-hidden h-screen flex flex-col transition-colors duration-500" id="app-body">
 
-<header class="flex justify-between items-center w-full px-6 py-2 border-b border-outline-variant bg-transparent z-50">
-    <div class="flex items-center">
-        <span class="material-symbols-outlined text-inherit p-2 hover:bg-surface-container-high transition-colors active:scale-95 duration-100 cursor-pointer rounded-none">menu</span>
-    </div>
-    <h1 class="font-bold tracking-tighter text-inherit text-[28px] uppercase">LUX</h1>
-    <div class="flex items-center">
-        <span class="material-symbols-outlined text-inherit p-2 hover:bg-surface-container-high transition-colors active:scale-95 duration-100 cursor-pointer rounded-none">settings</span>
-    </div>
-</header>
-
-<main class="flex-1 flex flex-col items-center justify-center relative px-6">
-    <div class="mb-4 text-center">
-        <p class="font-label-mono text-[12px] uppercase tracking-[0.2em] opacity-80" id="label-top">LUX INTENSITY</p>
-    </div>
-
-    <div class="relative flex items-center justify-center w-[300px] h-[300px] md:w-[400px] md:h-[400px]">
-        <svg class="absolute inset-0 w-full h-full" viewbox="0 0 100 100">
-            <circle class="opacity-10" cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-width="4"></circle>
-            <circle cx="50" cy="50" fill="none" id="progress-circle" r="45" stroke="currentColor" stroke-dasharray="282.7" stroke-dashoffset="282.7" stroke-linecap="square" stroke-width="6"></circle>
-        </svg>
-        <div class="text-center z-10">
-            <span class="font-bold tracking-tight text-[80px] block transition-colors duration-500" id="lux-value">0%</span>
+    <header class="flex justify-between items-center w-full px-6 py-2 border-b border-outline-variant bg-transparent z-50">
+        <div class="flex items-center">
+            <span class="material-symbols-outlined text-inherit p-2 hover:bg-surface-container-high transition-colors active:scale-95 duration-100 cursor-pointer rounded-none">menu</span>
         </div>
-    </div>
+        <h1 class="font-bold tracking-tighter text-inherit text-[28px] uppercase">LUX</h1>
+        <div class="flex items-center">
+            <span class="material-symbols-outlined text-inherit p-2 hover:bg-surface-container-high transition-colors active:scale-95 duration-100 cursor-pointer rounded-none">settings</span>
+        </div>
+    </header>
 
-    <div class="mt-4 text-center">
-        <h2 class="font-bold tracking-tight uppercase text-[28px] transition-colors duration-500" id="lux-status">DARK</h2>
-        <p class="font-label-mono text-[12px] mt-2 opacity-60 transition-colors duration-500" id="raw-lux">0.0 LUX</p>
-    </div>
-
-    <div class="absolute bottom-12 w-full max-w-xs px-6 opacity-40 hover:opacity-100 transition-opacity" id="fallback-control">
-        <label class="font-label-mono text-[12px] block mb-2 text-center uppercase" for="lux-slider">Manual Override</label>
-        <input class="w-full h-px bg-current appearance-none cursor-pointer accent-current" id="lux-slider" max="10000" min="0" type="range" value="0"/>
-    </div>
-</main>
-
-<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center border-t border-outline-variant bg-transparent">
-    <div class="flex flex-col items-center justify-center bg-[#e2e2e2] text-[#131313] p-2 w-1/3 transition-all duration-500" id="nav-live">
-        <span class="material-symbols-outlined">wb_sunny</span>
-        <span class="font-label-mono text-[12px]">LIVE</span>
-    </div>
-    <div class="flex flex-col items-center justify-center text-inherit p-2 w-1/3 hover:bg-surface-container-high transition-colors cursor-pointer" id="nav-history">
-        <span class="material-symbols-outlined">history</span>
-        <span class="font-label-mono text-[12px]">HISTORY</span>
-    </div>
-    <div class="flex flex-col items-center justify-center text-inherit p-2 w-1/3 hover:bg-surface-container-high transition-colors cursor-pointer" id="nav-labs">
-        <span class="material-symbols-outlined">science</span>
-        <span class="font-label-mono text-[12px]">LABS</span>
-    </div>
-</nav>
-
-<script>
-    const appBody = document.getElementById('app-body');
-    const progressCircle = document.getElementById('progress-circle');
-    const luxDisplay = document.getElementById('lux-value');
-    const luxStatus = document.getElementById('lux-status');
-    const rawLuxDisplay = document.getElementById('raw-lux');
-    const luxSlider = document.getElementById('lux-slider');
-    const liveTab = document.getElementById('nav-live');
-
-    const circumference = 2 * Math.PI * 45;
-    const MAX_LUX = 10000; // Adjusted for better indoor/outdoor scale representation
-
-    function updateUI(lux) {
-        const percentage = Math.min(Math.round((lux / MAX_LUX) * 100), 100);
-        const offset = circumference - (percentage / 100) * circumference;
+    <main class="flex-1 flex flex-col items-center justify-center relative px-6 pb-24">
         
-        progressCircle.style.strokeDashoffset = offset;
-        luxDisplay.textContent = `${percentage}%`;
-        rawLuxDisplay.textContent = `${lux.toFixed(1)} LUX`;
+        <div class="flex flex-col items-center justify-center w-full max-w-[340px] md:max-w-[400px]">
+            
+            <div class="mb-4 text-center">
+                <p class="font-label-mono text-[12px] uppercase tracking-[0.2em] opacity-80" id="label-top">LUX INTENSITY</p>
+            </div>
 
-        let status = 'DARK';
-        if (percentage > 80) status = 'BLINDING';
-        else if (percentage > 60) status = 'BRIGHT';
-        else if (percentage > 30) status = 'NORMAL';
-        else if (percentage > 10) status = 'DIM';
+            <div class="relative flex items-center justify-center w-full aspect-square">
+                <svg class="absolute inset-0 w-full h-full" viewbox="0 0 100 100">
+                    <circle class="opacity-10" cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-width="4"></circle>
+                    <circle cx="50" cy="50" fill="none" id="progress-circle" r="40" stroke="currentColor" stroke-dasharray="282.7" stroke-dashoffset="282.7" stroke-linecap="square" stroke-width="6"></circle>
+                </svg>
+                <div class="text-center z-10">
+                    <span class="font-bold tracking-tight text-[72px] md:text-[80px] block transition-colors duration-500" id="lux-value">0%</span>
+                </div>
+            </div>
 
-        luxStatus.textContent = status;
+            <div class="mt-4 text-center">
+                <h2 class="font-bold tracking-tight uppercase text-[24px] md:text-[28px] transition-colors duration-500" id="lux-status">DARK</h2>
+                <p class="font-label-mono text-[11px] md:text-[12px] mt-1 opacity-60 transition-colors duration-500" id="raw-lux">0.0 LUX</p>
+            </div>
 
-        // Dynamic background scaling (grayscale)
-        const lightness = 9 + (percentage * 0.81); // Maps 0-100% to HSL lightness 9% to 90%
-        appBody.style.backgroundColor = `hsl(0, 0%, ${lightness}%)`;
+            <div class="w-full max-w-xs px-6 mt-4 text-center" id="permission-container">
+                <button id="start-camera-btn" class="w-full border border-current py-3 text-[14px] font-label-mono uppercase tracking-wider hover:bg-surface-container-high active:scale-[0.98] transition-all rounded-none bg-transparent">
+                    Initialize Camera Sensor
+                </button>
+            </div>
+            
+        </div>
 
-        // Smooth text color inversion
-        if (lightness > 50) {
-            appBody.style.color = '#131313';
-            progressCircle.style.stroke = '#131313';
-            liveTab.style.backgroundColor = '#131313';
-            liveTab.style.color = '#ffffff';
-        } else {
-            appBody.style.color = '#e2e2e2';
-            progressCircle.style.stroke = '#e2e2e2';
-            liveTab.style.backgroundColor = '#e2e2e2';
-            liveTab.style.color = '#131313';
+        <div class="absolute bottom-6 w-full max-w-xs px-6 opacity-40 hover:opacity-100 transition-opacity" id="fallback-control">
+            <label class="font-label-mono text-[11px] block mb-1 text-center uppercase tracking-wider" for="lux-slider">Manual Override</label>
+            <input class="w-full h-px bg-current appearance-none cursor-pointer accent-current" id="lux-slider" max="100" min="0" type="range" value="0"/>
+        </div>
+    </main>
+
+    <script>
+        // Inform Telegram engine that the app container is ready for processing parameters
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand(); // Opens the mini app to full viewport size immediately
         }
-    }
 
-    // Corrected Ambient Light Sensor API Implementation
-    if ('AmbientLightSensor' in window) {
-        try {
-            const sensor = new AmbientLightSensor({ frequency: 10 });
-            sensor.addEventListener('reading', () => {
-                // BUG FIX: Changed sensor.lux to sensor.illuminance
-                updateUI(sensor.illuminance);
-            });
-            sensor.start();
-        } catch (error) {
-            console.error("Sensor access denied or not supported:", error);
+        const appBody = document.getElementById('app-body');
+        const progressCircle = document.getElementById('progress-circle');
+        const luxDisplay = document.getElementById('lux-value');
+        const luxStatus = document.getElementById('lux-status');
+        const rawLuxDisplay = document.getElementById('raw-lux');
+        const luxSlider = document.getElementById('lux-slider');
+        const cameraBtn = document.getElementById('start-camera-btn');
+        const permissionContainer = document.getElementById('permission-container');
+
+        const circumference = 2 * Math.PI * 45;
+
+        let videoElement = null;
+        let canvasElement = null;
+        let canvasCtx = null;
+        let streamRef = null;
+        let intervalId = null;
+
+        function updateUI(percentage) {
+            percentage = Math.min(Math.max(Math.round(percentage), 0), 100);
+            
+            const offset = circumference - (percentage / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+            luxDisplay.textContent = `${percentage}%`;
+            
+            const estimatedLux = (percentage / 100) * 10000;
+            rawLuxDisplay.textContent = `${estimatedLux.toFixed(0)} EST. LUX`;
+
+            let status = 'DARK';
+            if (percentage > 80) status = 'BLINDING';
+            else if (percentage > 60) status = 'BRIGHT';
+            else if (percentage > 30) status = 'NORMAL';
+            else if (percentage > 10) status = 'DIM';
+
+            luxStatus.textContent = status;
+
+            const lightness = 9 + (percentage * 0.81); 
+            appBody.style.backgroundColor = `hsl(0, 0%, ${lightness}%)`;
+
+            if (lightness > 50) {
+                appBody.style.color = '#131313';
+                progressCircle.style.stroke = '#131313';
+            } else {
+                appBody.style.color = '#e2e2e2';
+                progressCircle.style.stroke = '#e2e2e2';
+            }
         }
-    }
 
-    // Manual Fallback Logic
-    luxSlider.addEventListener('input', (e) => {
-        updateUI(parseFloat(e.target.value));
-    });
+        function analyzeFrame() {
+            if (!canvasCtx || !videoElement) return;
 
-    // Initial State
-    updateUI(0);
-</script>
+            canvasCtx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+            const imgData = canvasCtx.getImageData(0, 0, canvasElement.width, canvasElement.height);
+            const data = imgData.data;
+            let totalRgbaLuminance = 0;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i+1];
+                const b = data[i+2];
+                const luminance = (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+                totalRgbaLuminance += luminance;
+            }
+
+            const averageLuminance = totalRgbaLuminance / (data.length / 4);
+            const finalPercentage = (averageLuminance / 255) * 100;
+            updateUI(finalPercentage);
+        }
+
+        // Single Intentional Event Trigger Block
+        cameraBtn.addEventListener('click', async () => {
+            rawLuxDisplay.textContent = "REQUESTING ACCESS...";
+            
+            // Build elements explicitly upon verified touch engagement
+            videoElement = document.createElement('video');
+            videoElement.setAttribute('autoplay', '');
+            videoElement.setAttribute('playsinline', '');
+            videoElement.style.display = 'none';
+            document.body.appendChild(videoElement);
+
+            canvasElement = document.createElement('canvas');
+            canvasElement.width = 32; 
+            canvasElement.height = 32;
+            canvasCtx = canvasElement.getContext('2d');
+            
+            try {
+                streamRef = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'user', 
+                        width: { ideal: 32 }, 
+                        height: { ideal: 32 }
+                    },
+                    audio: false
+                });
+                
+                videoElement.srcObject = streamRef;
+                videoElement.onloadedmetadata = () => {
+                    intervalId = setInterval(analyzeFrame, 200);
+                };
+                
+                permissionContainer.style.display = 'none';
+                
+            } catch (err) {
+                console.error("Camera prompt rejected:", err);
+                handleCameraError(err);
+            }
+        });
+
+        function handleCameraError(error) {
+            rawLuxDisplay.textContent = `ERR: ${error.name.toUpperCase()}`;
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                alert("Please enable camera permissions specifically for Telegram within your phone system settings layout.");
+            }
+        }
+
+        luxSlider.addEventListener('input', (e) => {
+            if (streamRef) {
+                if (intervalId) clearInterval(intervalId);
+                streamRef.getTracks().forEach(track => track.stop());
+            }
+            updateUI(parseFloat(e.target.value));
+        });
+
+        // Setup base state cleanly without invoking background media sensor hooks automatically
+        window.addEventListener('DOMContentLoaded', () => {
+            updateUI(0);
+        });
+    </script>
 </body>
 </html>
