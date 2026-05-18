@@ -80,7 +80,7 @@
 
             <div class="w-full max-w-xs px-6 mt-4 text-center" id="permission-container">
                 <button id="start-camera-btn" class="w-full border border-current py-3 text-[14px] font-label-mono uppercase tracking-wider hover:bg-surface-container-high active:scale-[0.98] transition-all rounded-none bg-transparent">
-                    Initialize Camera Sensor
+                    Start Light Detection
                 </button>
             </div>
             
@@ -110,18 +110,23 @@
         let intervalId = null;
 
         let smoothedPercentage = 0; 
-        
         const DAMPING_FACTOR = 0.12; 
+        
+        let hardwareSensorActive = false;
 
-        function updateUI(percentage) {
+        function updateUI(percentage, isRawLux = false, rawValue = 0) {
             percentage = Math.min(Math.max(Math.round(percentage), 0), 100);
             
             const offset = circumference - (percentage / 100) * circumference;
             progressCircle.style.strokeDashoffset = offset;
             luxDisplay.textContent = `${percentage}%`;
             
-            const estimatedLux = (percentage / 100) * 3000;
-            rawLuxDisplay.textContent = `${estimatedLux.toFixed(0)} EST. LUX`;
+            if (isRawLux) {
+                rawLuxDisplay.textContent = `${rawValue.toFixed(1)} LUX`;
+            } else {
+                const estimatedLux = (percentage / 100) * 3000;
+                rawLuxDisplay.textContent = `${estimatedLux.toFixed(0)} EST. LUX`;
+            }
 
             let status = 'DARK';
             if (percentage > 80) status = 'BLINDING';
@@ -162,13 +167,12 @@
             const averageLuminance = totalRgbaLuminance / (data.length / 4);
             const normalizedLuminance = averageLuminance / 255;
             
-            // Calibration mathematical exponent curves midtones down to neutralize automatic gain boosts
             const calibratedValue = Math.pow(normalizedLuminance, 1.8);
             const rawTargetPercentage = calibratedValue * 100;
 
             smoothedPercentage = (rawTargetPercentage * DAMPING_FACTOR) + (smoothedPercentage * (1 - DAMPING_FACTOR));
 
-            updateUI(smoothedPercentage);
+            updateUI(smoothedPercentage, false);
         }
 
         cameraBtn.addEventListener('click', async () => {
@@ -215,8 +219,41 @@
             }
         }
 
+        function checkSensorsOnLaunch() {
+            if ('AmbientLightSensor' in window) {
+                try {
+                    const sensor = new AmbientLightSensor({ frequency: 10 });
+                    
+                    sensor.addEventListener('reading', () => {
+                        hardwareSensorActive = true;
+                        permissionContainer.style.display = 'none'; 
+                        
+                        const hardwarePercentage = (sensor.illuminance / 3000) * 100;
+                        updateUI(hardwarePercentage, true, sensor.illuminance);
+                    });
+
+                    sensor.addEventListener('error', (event) => {
+                        console.log("Hardware sensor blocked by platform policies. Deploying camera fallback.");
+                        switchToCameraUI();
+                    });
+
+                    sensor.start();
+                } catch (error) {
+                    switchToCameraUI();
+                }
+            } else {
+                switchToCameraUI();
+            }
+        }
+
+        function switchToCameraUI() {
+            if (hardwareSensorActive) return;
+            permissionContainer.style.display = 'block';
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             updateUI(0);
+            checkSensorsOnLaunch();
         });
     </script>
 </body>
